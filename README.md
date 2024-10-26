@@ -71,8 +71,8 @@ And check how they are rendered on [the website](https://unikraft.org/)
 ### OWASP Website
 
 1. See Markdown files in the [`owasp.github.io` repository](https://github.com/OWASP/owasp.github.io).
-2. For files in the repository, check the raw format.
-3. And check how they are rendered on [the website](https://owasp.org/).
+1. For files in the repository, check the raw format.
+1. And check how they are rendered on [the website](https://owasp.org/).
 
 ## Using the Repository Fork
 
