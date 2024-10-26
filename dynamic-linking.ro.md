@@ -15,31 +15,7 @@ Pentru aceasta, am renunțat la argumentul `-static` folosit la linkare.
 Pentru acest exemplu, obținem un singur executabil `main`, din legarea statică cu biblioteca `libinc.a` și legarea dinamică cu biblioteca standard C.
 Similar exemplului din directorul `05-static/, folosim comanda `make` pentru a obține executabilul `main`:
 
-```console
-[..]/06-dynamic$ ls
-inc.c  inc.h  main.c  Makefile
 
-[..]/06-dynamic$ make
-cc -fno-PIC -m32   -c -o main.o main.c
-cc -fno-PIC -m32   -c -o inc.o inc.c
-ar rc libinc.a inc.o
-cc -no-pie -m32 -L. -o main main.o -linc
-
-[..]/06-dynamic$ ls
-inc.c  inc.h  inc.o  libinc.a  main  main.c  main.o  Makefile
-
-[..]/06-dynamic$ ls -l main
--rwxr-xr-x 1 razvan razvan 7272 Jan 17 17:42 main
-
-[..]/06-dynamic$ ./main
-num_items: 1
-
-[..]/06-dynamic$ file main
-main: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=8d99d4600dc70919266f4063da1eaf8ff9ce96e1, not stripped
-
-[..]/06-dynamic$ file ../05-static/main
-../05-static/main: ELF 32-bit LSB executable, Intel 80386, version 1 (GNU/Linux), statically linked, for GNU/Linux 3.2.0, BuildID[sha1]=60adf8390374c898998c0b713a8b1ea0c255af38, not stripped
-``
 
 Fișierul executabil `main` obținut prin linkare dinamică are un comportament identic fișierului executabil `main` obținut prin linkare statică.
 Observăm că dimensiunea sa este mult mai redusă: ocupă `7 KB` comparativ cu `600 KB` cât avea varianta sa statică.
@@ -47,22 +23,6 @@ De asemenea, folosind utilitarul `file`, aflăm că este executabil obținut pri
 
 Investigăm simbolurile executabilului:
 
-```console
-[..]/06-dynamic$ nm main
-[...]
-0804848c T increment
-0804847c T init
-[...]
-         U __libc_start_main@@GLIBC_2.0
-08048446 T main
-0804a020 b num_items
-080484a9 T print
-         U printf@@GLIBC_2.0
-0804849f T read
-[...]
-08048330 T _start
-[...]
-```
 
 Simbolurile obținute din modulul obiect `main.o` și din biblioteca statică `libinc.o` sunt rezolvate și au adrese stabilite.
 Observăm că folosirea bibliotecii standard C a dus la existența simboblului `_start`, care este entry pointul programului.
@@ -77,12 +37,7 @@ La încărcare, o altă componentă software a sistemului, loaderul / linkerul d
 
 Putem investiga bibliotecile dinamice folosite de un executabil prin intermediul utilitarului `ldd`:
 
-``console
-[..]/06-dynamic$ ldd main
-	linux-gate.so.1 (0xf7f97000)
-	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7d8a000)
-	/lib/ld-linux.so.2 (0xf7f98000)
-```
+
 
 În rezultatul de mai sus, observăm că executabilul folosește biblioteca standard C, localizată la calea `/lib/i386-linux-gnu/libc.so.6`.
 `/lib/ld-linux.so.2` este loaderul / linkerul dinamic.
@@ -112,77 +67,13 @@ Pentru aceasta, construim fișierul bibliotecă partajată `libinc.so`, în locu
 
 Similar exemplului din directorul `06-dynamic/`, folosim comanda `make` pentru a obține executabilul `main`:
 
-```console
-[..]/07-dynlib$ ls
-inc.c  inc.h  main.c  Makefile
 
-[..]/07-dynlib$ make
-cc -fno-PIC -m32   -c -o main.o main.c
-cc -fno-PIC -m32   -c -o inc.o inc.c
-cc -m32 -shared -o libinc.so inc.o
-cc -no-pie -m32 -L. -o main main.o -linc
-
-[..]/07-dynlib$ ls
-inc.c  inc.h  inc.o  libinc.so  main  main.c  main.o  Makefile
-
-[..]/07-dynlib$ ls -l main
--rwxr-xr-x 1 razvan razvan 7200 Jan 17 18:11 main
-
-[..]/07-dynlib$ nm main
-[...]
-         U increment
-         U init
-080483ac T _init
-[...]
-         U __libc_start_main@@GLIBC_2.0
-08048556 T main
-         U print
-         U read
-[...]
-08048440 T _start
-```
 
 Executabilul obținut are dimensiunea în jur de `7 KB` puțin mai mică decât a executabilului din exemplul anterior.
 Diferența cea mai mare este că, acum, simbolurile din biblioteca `libinc.so` (`increment`, `init`, `print`, `read`) sunt nerezolvate.
 
 Dacă încercăm lansarea în execuție a executabilului, observăm că primim o eroare:
 
-```console
-[..]/07-dynlib$ ./main
-./main: error while loading shared libraries: libinc.so: cannot open shared object file: No such file or directory
-```
-
-Eroarea spune că nu poate localiza biblioteca `libinc.so` la încărcare (*loading*).
-Este deci, o eroare de loader.
-
-O eroare similară obținem dacă folosim utilitarul `ldd`:
-
-```console
-[..]/07-dynlib$ ldd ./main
-	linux-gate.so.1 (0xf7f9f000)
-	libinc.so => not found
-	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7d92000)
-	/lib/ld-linux.so.2 (0xf7fa0000)
-```
-
-La fel, biblioteca `libinc.so` nu este găsită.
-
-Motivul este că nu am precizat loaderului unde să caute biblioteca partajată.
-Loaderul are definită calea unde să caute biblioteca standard C (`/lib/i386-linux-gnu/libc.so.6`), dar nu deține informații despre `libinc.so`.
-
-Ca să precizăm loaderului calea către bibliotecă, o cale simplă, de test, este folosirea variabilei de mediu `LD_LIBRARY_PATH`, pe care o inițializăm la directorul curent (`.` - *dot*).
-Odată folosită variabila de mediu `LD_LIBRARY_PATH`, lansarea în execuție a executabilului va funcționa, la fel și folosirea `ldd`:
-
-```console
-[..]/07-dynlib$ LD_LIBRARY_PATH=. ldd ./main
-	linux-gate.so.1 (0xf7eda000)
-	libinc.so => ./libinc.so (0xf7ed2000)
-	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xf7cca000)
-	/lib/ld-linux.so.2 (0xf7edb000)
-
-[..]/07-dynlib$ LD_LIBRARY_PATH=. ./main
-num_items: 1
-```
 
 Variabila de mediu `LD_LIBRARY_PATH` pentru loader este echivalentul opțiunii `-L` în comanda de linkare: precizează directoarele în care să fie căutate biblioteci pentru a fi încărcate, respectiv linkate.
 Folosirea variabilei de mediu `LD_LIBRARY_PATH` este recomandată pentru teste.
