@@ -239,18 +239,14 @@ You can check the profile pages below as examples:
 - [Gabi Mocanu](https://github.com/gabrielmocanu)
 - [Cezar Crăciunoiu](https://github.com/craciunoiuc)
 - [Maria Sfîrăială](https://github.com/mariasfiraiala)
-- [Răzvan Vîrtan](https://github.com/razvanvirtan)
-- [Alexander Jung](https://github.com/nderjung)
 
-The profile pages are rendered from a standard repository named `.github`.
-See the contents of each `.github` repository for the above accounts:
+The profile pages are rendered from a standard repository named **exactly** as the account name.
+See the contents of each account repository for the above accounts:
 
-- https://github.com/andreia-oca/.github
-- https://github.com/gabrielmocanu/.github
-- https://github.com/craciunoiuc/.github
-- https://github.com/mariasfiraiala/.github
-- https://github.com/razvanvirtan/.github
-- https://github.com/nderjung/.github
+- https://github.com/andreia-oca/andreia-oca
+- https://github.com/gabrielmocanu/gabriel-mocanu
+- https://github.com/craciunoiuc/craciunoiuc
+- https://github.com/mariasfiraiala/mariasfiraiala
 
 The repository consists of a single `README.md` Markdown file.
 This `README.md` file in the `.github` repository is automatically rendered by GitHub on the account profile page.
